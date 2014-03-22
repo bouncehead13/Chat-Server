@@ -7,95 +7,83 @@ import java.util.*;
 class Client implements Runnable
 {
 	private Socket connection;
-	private String username;
-	private boolean verbose;
 	private ChatServer server;
+	private DataOutputStream out;
+	private String ip;
+	private boolean signin;
 	
-	public Client(Socket sock, boolean v, ChatServer s)
+	public Client(Socket sock, ChatServer s)
 	{
 		connection = sock;
-		verbose = v;
 		server = s;
+		ip = sock.getInetAddress().getHostAddress();
+		signin = true;
+		try
+		{
+			out = new DataOutputStream(sock.getOutputStream());
+		}
+		catch(IOException ex)
+		{
+			System.err.println(ex);
+		}
 	}
 	
+	public DataOutputStream getOutputStream()
+	{
+		return out;
+	}
+	
+	public String getIP()
+	{
+		return ip;
+	}
+	
+	public boolean getSignin()
+	{
+		return signin;
+	}
+	
+	public void signinGood()
+	{
+		signin = false;
+	}
+	
+	/* checks client is signed */
 	public void run()
 	{
-		boolean signin = true;
-		
 		while(signin)
 		{
-			String sentence = readData();
-			
-			if(findString(sentence, "ME IS"))
-			{
-				if(sentence.length() == 5)
-				{
-					sendData("Please enter a username");
-					continue;
-				}
-				
-				username = (sentence.substring(6));
-				if(server.addClient(username, connection))
-				{
-					signin = false;
-					sendData("OK");
-				}
-				else
-				{
-					sendData("ERROR: Bad userid");
-				}
-			}
-			else
-			{
-				if(signin)
-				{
-					sendData("You must sign in first");
-				}
-			}
+			readData();
 		}
 		
 		listenForData();
 	}
 	
-	void listenForData()
+	/* main function */
+	private void listenForData()
 	{
+		System.out.println("Listening...");
 		while(true)
 		{
+			/*
+			String[] command = readData().split(" ");
+			String size = readData();
+			String message = readData();
 			
+			server.sendMessageToUser(connection, command[0], message, command[1]);
+			 */
 		}
 	}
 	
-	boolean findString(String s, String check)
-	{
-		Integer size = check.length();
-		if(s.length() >= size && s.substring(0, size).equals(check))
-			return true;
-		else
-			return false;
-	}
-	
-	String readData()
+	/* read a line from the client data stream */
+	private void readData()
 	{
 		try
 		{
 			InputStream stream = connection.getInputStream();
 			BufferedReader in = new BufferedReader(new InputStreamReader(stream));
 			String sentence = in.readLine();
-			return sentence;
-		}
-		catch(IOException ex)
-		{
-			System.err.println(ex);
-			return "";
-		}
-	}
-	
-	public void sendData(String s)
-	{
-		try
-		{
-			DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-			out.writeBytes(s + "\n");
+			server.readMessageFromClient(this, sentence);
 		}
 		catch(IOException ex)
 		{
