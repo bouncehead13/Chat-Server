@@ -8,7 +8,7 @@ import java.util.concurrent.*;
 class ChatServer extends RecursiveTask<Integer>
 {
 	private Integer port;
-	private Map<String, Integer> clients;
+	private Map<String, String> clients;
 	private ServerSocket server;
 	private ExecutorService executor;
 	private boolean verbose;
@@ -18,7 +18,7 @@ class ChatServer extends RecursiveTask<Integer>
 		port = p;
 		verbose = v;
 		executor = Executors.newFixedThreadPool(32);
-		clients = new HashMap<String, Integer>();
+		clients = new HashMap<String, String>();
 	}
 	
 	@Override
@@ -30,7 +30,7 @@ class ChatServer extends RecursiveTask<Integer>
 			while(true)
 			{
 				Socket connection = server.accept();
-				executor.submit(new Client(connection, this));
+				executor.submit(new Client(connection, verbose, this));
 			}
 		}
 		catch(IOException ex)
@@ -43,9 +43,10 @@ class ChatServer extends RecursiveTask<Integer>
 	
 	boolean addClient(String userid, Socket s)
 	{
-		if(!clients.containsKey(userid) && !clients.containsValue(s.getPort()))
+		String ip = s.getInetAddress().getHostAddress();
+		if(!clients.containsKey(userid) && !clients.containsValue(ip))
 		{
-			clients.put(userid, s.getPort());
+			clients.put(userid, ip);
 			return true;
 		}
 		else
