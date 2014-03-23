@@ -5,7 +5,7 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-class ChatServer extends RecursiveTask<Integer>
+class ChatServer extends RecursiveAction
 {
 	private Integer port;
 	private Map<String, String> clients;
@@ -22,7 +22,7 @@ class ChatServer extends RecursiveTask<Integer>
 	}
 	
 	@Override
-	protected Integer compute()
+	protected void compute()
 	{
 		try
 		{
@@ -37,8 +37,6 @@ class ChatServer extends RecursiveTask<Integer>
 		{
 			System.err.println(ex);
 		}
-		
-		return 10;
 	}
 	
 	/* client wants to send a message to a specified user */
@@ -73,7 +71,7 @@ class ChatServer extends RecursiveTask<Integer>
 	/* read a message from the client */
 	public void readMessageFromClient(Client c, String message)
 	{
-		/* check if they sign in */
+		/* check if they are trying to sign in */
 		if(c.getSignin() && findString(message, "ME IS"))
 		{
 			if(message.length() == 5)
@@ -87,19 +85,18 @@ class ChatServer extends RecursiveTask<Integer>
 			{
 				c.signinGood();
 				sendMessageToClient(c, "OK");
-				return;
 			}
 			else
 			{
 				sendMessageToClient(c, "ERROR: Bad userid");
 			}
 		}
-		
-		/* must be signed in first */
-		if(!c.getSignin())
+		/* signed in and is sending a message */
+		else if(!c.getSignin())
 		{
 			
 		}
+		/* must be signed in first */
 		else
 		{
 			sendMessageToClient(c, "You must sign in first");
