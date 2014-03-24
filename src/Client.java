@@ -59,7 +59,6 @@ class Client implements Runnable
 		}
 		catch(IOException ex)
 		{
-			System.out.println("setConnection() error");
 			System.err.println(ex);
 		}
 	}
@@ -67,13 +66,8 @@ class Client implements Runnable
 	/* checks client is signed */
 	public void run()
 	{
-		while(signin && connectionLive)
-		{
-			readData();
-		}
-		
+		signInClient();
 		listenForData();
-		System.out.println("Exiting");
 	}
 	
 	/* main function */
@@ -82,19 +76,39 @@ class Client implements Runnable
 		System.out.println("Listening...");
 		while(connectionLive)
 		{
+			readMessage();
+		}
+	}
+	
+	/* waits until the client signs in */
+	private void signInClient()
+	{
+		while(signin && connectionLive)
+		{
 			readData();
-			/*String[] command = readData().split(" ");
-			String size = readData();
-			String message = readData();
-			
-			server.sendMessageToUser(connection, command[0], message, command[1]);
-			 */
 		}
 	}
 	
 	/* read a line from the client data stream */
 	private void readData()
 	{
+		try
+		{
+			InputStream stream = connection.getInputStream();
+			BufferedReader in = new BufferedReader(new InputStreamReader(stream));
+			String sentence = in.readLine();
+			server.readDataFromClient(this, sentence);
+		}
+		catch(IOException ex)
+		{
+			System.err.println(ex);
+		}
+	}
+	
+	/* read the message from the client data stream */
+	private void readMessage()
+	{
+		/* FINISH THIS SECTION */
 		try
 		{
 			InputStream stream = connection.getInputStream();

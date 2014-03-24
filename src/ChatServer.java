@@ -42,9 +42,13 @@ class ChatServer extends RecursiveAction
 	/* client wants to send a message to a specified user */
 	public void sendMessageToUser(Client c, String message)
 	{
+		/* FINISH THIS SECTION */
 		synchronized(this)
 		{
-			
+			if(verbose)
+			{
+				
+			}
 		}
 	}
 	
@@ -59,7 +63,7 @@ class ChatServer extends RecursiveAction
 			{
 				String ip = c.getIP();
 				System.out.print("SENT to " + ip);
-				System.out.print(": " + message + "\n");
+				System.out.println(": " + message);
 			}
 		}
 		catch(IOException ex)
@@ -74,7 +78,26 @@ class ChatServer extends RecursiveAction
 	public void readMessageFromClient(Client c, String message)
 	{
 		message = message.trim();
-		System.out.println("Read in [" + message + "]");
+		
+		/* FINISH THIS SECTION */
+		if(verbose)
+		{
+			
+		}
+	}
+	
+	/* read data from the client */
+	public void readDataFromClient(Client c, String message)
+	{
+		message = message.trim();
+		
+		if(verbose)
+		{
+			String ip = c.getIP();
+			System.out.print("RCVD from " + ip);
+			System.out.println(": " + message);
+		}
+		
 		/* check if they are trying to sign in */
 		if(c.getSignin() && findString(message, "ME IS"))
 		{
@@ -84,7 +107,7 @@ class ChatServer extends RecursiveAction
 				return;
 			}
 			
-			String username = (message.substring(6));
+			String username = (message.substring(6)).toLowerCase();
 			if(addClient(username, c))
 			{
 				c.signinGood();
@@ -92,13 +115,8 @@ class ChatServer extends RecursiveAction
 			}
 			else
 			{
-				sendMessageToClient(c, "ERROR: Bad userid");
+				sendMessageToClient(c, "ERROR: Bad username");
 			}
-		}
-		/* signed in and is sending a message */
-		else if(!c.getSignin())
-		{
-			sendMessageToClient(c, "Implement this :)");
 		}
 		/* must be signed in first */
 		else
