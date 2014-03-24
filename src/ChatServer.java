@@ -17,7 +17,7 @@ class ChatServer extends RecursiveAction
 	{
 		port = p;
 		verbose = v;
-		executor = Executors.newFixedThreadPool(32);
+		executor = Executors.newCachedThreadPool();
 		clients = new HashMap<String, String>();
 	}
 	
