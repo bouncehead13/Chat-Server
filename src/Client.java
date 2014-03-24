@@ -11,6 +11,7 @@ class Client implements Runnable
 	private DataOutputStream out;
 	private String ip;
 	private boolean signin;
+	private boolean connectionLive;
 	
 	public Client(Socket sock, ChatServer s)
 	{
@@ -18,6 +19,7 @@ class Client implements Runnable
 		server = s;
 		ip = sock.getInetAddress().getHostAddress();
 		signin = true;
+		connectionLive = true;
 		try
 		{
 			out = new DataOutputStream(sock.getOutputStream());
@@ -48,25 +50,40 @@ class Client implements Runnable
 		signin = false;
 	}
 	
+	public void closeConnection()
+	{
+		try
+		{
+			connectionLive = false;
+			connection.close();
+		}
+		catch(IOException ex)
+		{
+			System.out.println("setConnection() error");
+			System.err.println(ex);
+		}
+	}
+	
 	/* checks client is signed */
 	public void run()
 	{
-		while(signin)
+		while(signin && connectionLive)
 		{
 			readData();
 		}
 		
 		listenForData();
+		System.out.println("Exiting");
 	}
 	
 	/* main function */
 	private void listenForData()
 	{
 		System.out.println("Listening...");
-		while(true)
+		while(connectionLive)
 		{
-			/*
-			String[] command = readData().split(" ");
+			readData();
+			/*String[] command = readData().split(" ");
 			String size = readData();
 			String message = readData();
 			

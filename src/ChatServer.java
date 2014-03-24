@@ -64,6 +64,8 @@ class ChatServer extends RecursiveAction
 		}
 		catch(IOException ex)
 		{
+			c.closeConnection();
+			System.out.println("sendMessageToClient() error");
 			System.err.println(ex);
 		}
 	}
@@ -71,6 +73,8 @@ class ChatServer extends RecursiveAction
 	/* read a message from the client */
 	public void readMessageFromClient(Client c, String message)
 	{
+		message = message.trim();
+		System.out.println("Read in [" + message + "]");
 		/* check if they are trying to sign in */
 		if(c.getSignin() && findString(message, "ME IS"))
 		{
@@ -94,7 +98,7 @@ class ChatServer extends RecursiveAction
 		/* signed in and is sending a message */
 		else if(!c.getSignin())
 		{
-			
+			sendMessageToClient(c, "Implement this :)");
 		}
 		/* must be signed in first */
 		else
