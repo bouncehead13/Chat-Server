@@ -78,4 +78,10 @@ class ChatServer extends RecursiveAction
 				return false;
 		}
 	}
+	
+	public Client findClient(String userid)
+	{
+		Client c = clients.get(userid);
+		return c;
+	}
 }

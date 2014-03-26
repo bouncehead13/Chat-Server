@@ -98,6 +98,7 @@ class Client implements Runnable
 	
 	public String readData() throws IOException
 	{
+		System.out.println("Reading in...");
 		String sentence = new String();
 		sentence = in.readLine();
 		return sentence;
@@ -151,22 +152,29 @@ class Client implements Runnable
 	
 	public void parseMessage(String message) throws IOException
 	{
+		System.out.println("Message parse with [" + message + "]");
 		message = message.trim();
 		String[] header = message.split(" ");
-
-		if(header[0].equals("SEND"))
+		
+		if(header.length != 3)
 		{
-			if(verbose)
-			{
-				System.out.print("RCVD from " + username);
-				System.out.println(" (" + ip + "):");
-			}
-			
+			boolean send = sendData("ERROR: Needs <from-user> <target-user>");
+			if(verbose && send)
+				System.out.println("SENT to " + ip + ": ERROR: Needs <from-user> <target-user>");
+		}
+		else if(server.findClient(header[2]) == null)
+		{
+			boolean send = sendData("ERROR: Bad target-user");
+			if(verbose && send)
+				System.out.println("SENT to " + ip + ": ERROR: Bad target-user");
+		}
+		else if(header[0].equals("SEND"))
+		{
 			boolean chunked = false;
 			while(true)
 			{
 				String sizeString = readData();
-				System.out.println(sizeString);
+
 				Integer size = 0;
 				if(sizeString.substring(0,1).equals("C"))
 				{
@@ -203,14 +211,31 @@ class Client implements Runnable
 					}
 				}
 				
-				byte[] buff = new byte[size+1];
-				stream.read(buff, 0, size);
+				// +2 for \n
+				byte[] buff = new byte[size+2];
+				stream.read(buff, 0, size+2);
+				
+				if(verbose)
+				{
+					System.out.print("RCVD from " + username);
+					System.out.println(" (" + ip + "):");
+				}
+				
 				if(!chunked)
 				{
+					/* new String()? */
 					if(verbose)
+					{
 						System.out.println("  SEND " + header[1] + " " + header[2]);
-					/* toString()? */
-					server.sendMessageToClient(header[2], sizeString, buff.toString());
+						System.out.println("  " + sizeString);
+						System.out.println("  " + new String(buff));
+						
+						System.out.print("SENT to " + header[2] + " (");
+						System.out.println(server.findClient(header[2]).getIP() + "):");
+						System.out.println("  FROM " + header[1]);
+						
+					}
+					server.sendMessageToClient(header[2], sizeString, new String(buff));
 					break;
 				}
 				else
@@ -219,6 +244,9 @@ class Client implements Runnable
 				}
 			}
 		}
+		else
+			sendData("ERROR: Bad message");
+			
 	}
 	
 	/* check if the word is in the string 's' */
