@@ -80,19 +80,19 @@ class Client implements Runnable
 		}
 	}
 	
-	public boolean sendData(String message)
+	public void sendData(String message, boolean toClient)
 	{
 		try
 		{
 			out.writeBytes(message + "\n");
-			return true;
+			if(toClient)
+				System.out.println("SENT to " + ip + message);
 		}
 		catch(IOException ex)
 		{
 			System.err.println(ex);
 			System.out.println("sendData()");
 			closeConnection();
-			return false;
 		}
 	}
 	
@@ -119,9 +119,7 @@ class Client implements Runnable
 		{
 			if(message.length() == 5)
 			{
-				boolean send = sendData("ERROR: Please enter a username");
-				if(verbose && send)
-					System.out.println("SENT to " + ip + ": ERROR: Please enter a username");
+				sendData("ERROR: Please enter a username", true);
 				return;
 			}
 			
@@ -129,24 +127,18 @@ class Client implements Runnable
 			if(server.addClient(name, this))
 			{
 				signin = false;
-				boolean send = sendData("OK");
-				if(verbose && send)
-					System.out.println("SENT to " + ip + ": OK");
+				sendData("OK", true);
 				username = name;
 			}
 			else
 			{
-				boolean send = sendData("ERROR: Bad username/IP address");
-				if(verbose && send)
-					System.out.println("SENT to " + ip + ": ERROR: Bad username/IP address");
+				sendData("ERROR: Bad username/IP address", true);
 			}
 		}
 		/* must be signed in first */
 		else
 		{
-			boolean send = sendData("ERROR: You must sign in first");
-			if(verbose && send)
-				System.out.println("SENT to " + ip + ": ERROR: You must sign in first");
+			sendData("ERROR: You must sign in first", true);
 		}
 	}
 	
@@ -156,20 +148,19 @@ class Client implements Runnable
 		message = message.trim();
 		String[] header = message.split(" ");
 		
-		if(header.length != 3)
+		if(header[0].equals("SEND"))
 		{
-			boolean send = sendData("ERROR: Needs <from-user> <target-user>");
-			if(verbose && send)
-				System.out.println("SENT to " + ip + ": ERROR: Needs <from-user> <target-user>");
-		}
-		else if(server.findClient(header[2]) == null)
-		{
-			boolean send = sendData("ERROR: Bad target-user");
-			if(verbose && send)
-				System.out.println("SENT to " + ip + ": ERROR: Bad target-user");
-		}
-		else if(header[0].equals("SEND"))
-		{
+			if(header.length != 3)
+			{
+				sendData("ERROR: Needs <from-user> <target-user>", true);
+				return;
+			}
+			else if(server.findClient(header[2]) == null)
+			{
+				sendData("ERROR: Bad target-user", true);
+				return;
+			}
+			
 			boolean chunked = false;
 			while(true)
 			{
@@ -188,7 +179,7 @@ class Client implements Runnable
 					catch(NumberFormatException ex)
 					{
 						System.err.println(ex);
-						sendData("ERROR: Bad length");
+						sendData("ERROR: Bad length", true);
 						return;
 					}
 				}
@@ -199,14 +190,14 @@ class Client implements Runnable
 						size = Integer.parseInt(sizeString);
 						if(size > 99)
 						{
-							sendData("ERROR: Bad length");
+							sendData("ERROR: Bad length", true);
 							return;
 						}
 					}
 					catch(NumberFormatException ex)
 					{
 						System.err.println(ex);
-						sendData("ERROR: Bad length");
+						sendData("ERROR: Bad length", true);
 						return;
 					}
 				}
@@ -245,7 +236,7 @@ class Client implements Runnable
 			}
 		}
 		else
-			sendData("ERROR: Bad message");
+			sendData("ERROR: Bad command", true);
 			
 	}
 	

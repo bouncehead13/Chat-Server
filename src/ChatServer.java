@@ -52,7 +52,7 @@ class ChatServer extends RecursiveAction
 			}
 			
 			Client c = clients.get(name);
-			c.sendData(message);
+			c.sendData(message, false);
 		}
 	}
 	
