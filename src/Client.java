@@ -86,7 +86,7 @@ class Client implements Runnable
 		{
 			out.writeBytes(message + "\n");
 			if(toClient)
-				System.out.println("SENT to " + ip + message);
+				System.out.println("SENT to " + ip + " " + message);
 		}
 		catch(IOException ex)
 		{
@@ -98,7 +98,6 @@ class Client implements Runnable
 	
 	public String readData() throws IOException
 	{
-		System.out.println("Reading in...");
 		String sentence = new String();
 		sentence = in.readLine();
 		return sentence;
@@ -144,7 +143,6 @@ class Client implements Runnable
 	
 	public void parseMessage(String message) throws IOException
 	{
-		System.out.println("Message parse with [" + message + "]");
 		message = message.trim();
 		String[] header = message.split(" ");
 		
@@ -160,6 +158,9 @@ class Client implements Runnable
 				sendData("ERROR: Bad target-user", true);
 				return;
 			}
+			
+			header[1] = header[1].toLowerCase();
+			header[2] = header[2].toLowerCase();
 			
 			boolean chunked = false;
 			while(true)
@@ -203,8 +204,10 @@ class Client implements Runnable
 				}
 				
 				// +2 for \n
-				byte[] buff = new byte[size+2];
-				stream.read(buff, 0, size+2);
+				byte[] buff = new byte[size];
+				byte[] enter = new byte[2];
+				stream.read(buff, 0, size);
+				stream.read(enter, 0, 2);
 				
 				if(verbose)
 				{
@@ -233,6 +236,20 @@ class Client implements Runnable
 				{
 					
 				}
+			}
+		}
+		else if(header[0].equals("LOGOUT"))
+		{
+			if(header.length != 2)
+			{
+				sendData("ERROR: Needs <from-user>", true);
+				return;
+			}
+			
+			sendData("Logged out. Bye", true);
+			if(verbose)
+			{
+				System.out.println("SENT to " + ip + ": Logged out. Bye");
 			}
 		}
 		else
