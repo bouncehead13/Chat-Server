@@ -40,15 +40,16 @@ class ChatServer extends RecursiveAction
 	}
 	
 	/* server sending message back to client */
-	public void sendMessageToClient(String name, String size, String message)
+	public void sendMessageToClient(String name, String message)
 	{
 		/* FINISH THIS SECTION */
 		synchronized(this)
 		{
 			if(verbose)
 			{
-				System.out.println("  " + size);
-				System.out.println("  " + message);
+				String[] sentences = message.split("\n");
+				for(int i=0; i<sentences.length; i++)
+					System.out.println("  " + sentences[i]);
 			}
 			
 			Client c = clients.get(name);
@@ -79,9 +80,18 @@ class ChatServer extends RecursiveAction
 		}
 	}
 	
+	public Set<String> getClients()
+	{
+		return clients.keySet();
+	}
+	
 	public Client findClient(String userid)
 	{
-		Client c = clients.get(userid);
-		return c;
+		return clients.get(userid);
+	}
+	
+	public void removeClient(String userid)
+	{
+		clients.remove(userid);
 	}
 }
