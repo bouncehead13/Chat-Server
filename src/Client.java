@@ -40,7 +40,7 @@ class Client implements Runnable
 		}
 	}
 	
-	/* checks client is signed */
+	/* main while loop to accept commands */
 	public void run()
 	{
 		while(connectionLive)
@@ -77,6 +77,7 @@ class Client implements Runnable
 		return ip;
 	}
 	
+	/* close the socket and remove from mapping */
 	private void closeConnection()
 	{
 		try
@@ -101,15 +102,16 @@ class Client implements Runnable
 			System.out.println(": " + message);
 		}
 		
-		/* check if they are trying to sign in */
-		if(signin && message.startsWith("ME IS"))
+		if(message.startsWith("ME IS"))
 		{
+			/* make sure a username is provided */
 			if(message.length() == 5)
 			{
 				sendData("ERROR: Please enter a username", true);
 				return;
 			}
 			
+			/* try to add the client to the mapping */
 			String name = (message.substring(6)).toLowerCase();
 			if(server.addClient(name, this))
 			{
@@ -122,7 +124,6 @@ class Client implements Runnable
 				sendData("ERROR: Bad username/IP address", true);
 			}
 		}
-		/* must be signed in first */
 		else
 		{
 			sendData("ERROR: You must sign in first", true);
@@ -131,9 +132,11 @@ class Client implements Runnable
 	
 	public void parseMessage(String command) throws IOException
 	{
+		/* split command by spaces */
 		command = command.trim();
 		String[] header = command.split(" ");
 		
+		/* call the according command function */
 		if(header[0].equals("SEND"))
 		{
 			send(header);
@@ -152,7 +155,6 @@ class Client implements Runnable
 		}
 		else
 		{
-			
 			if(verbose)
 			{
 				System.out.print("RCVD from " + username);
@@ -166,6 +168,7 @@ class Client implements Runnable
 	
 	private void send(String[] header) throws IOException
 	{
+		/* check for correct arguments */
 		if(header.length != 3)
 		{
 			sendData("ERROR: Needs <from-user> <target-user>", true);
@@ -174,11 +177,13 @@ class Client implements Runnable
 		
 		String user = header[1].toLowerCase();
 		String toUser = header[2].toLowerCase();
+		/* check argument and username match */
 		if(!user.equals(username))
 		{
 			sendData("ERROR: Bad <from-user>", true);
 			return;
 		}
+		/* check username exists */
 		else if(server.findClient(toUser) == null)
 		{
 			sendData("ERROR: Bad <target-user>", true);
@@ -208,12 +213,14 @@ class Client implements Runnable
 	
 	private void broadcast(String[] header) throws IOException
 	{
+		/* check for correct arguments */
 		if(header.length != 2)
 		{
 			sendData("ERROR: Needs <from-user>", true);
 			return;
 		}
 		
+		/* check argument and username match */
 		String user = header[1].toLowerCase();
 		if(!user.equals(username))
 		{
@@ -248,14 +255,17 @@ class Client implements Runnable
 		}
 	}
 	
+	/* print a table of all users in the mapping */
 	private void whoHere(String[] header)
 	{
+		/* check for correct arguments */
 		if(header.length != 3)
 		{
 			sendData("ERROR: Needs <from-user>", true);
 			return;
 		}
 		
+		/* check argument and username match */
 		String user = header[2].toLowerCase();
 		if(!user.equals(username))
 		{
@@ -271,14 +281,17 @@ class Client implements Runnable
 		}
 	}
 	
+	/* log client out */
 	private void logout(String[] header)
 	{
+		/* check for correct arguments */
 		if(header.length != 2)
 		{
 			sendData("ERROR: Needs <from-user>", true);
 			return;
 		}
 		
+		/* check argument and username match */
 		String user = header[1].toLowerCase();
 		if(!user.equals(username))
 		{

@@ -21,6 +21,7 @@ class ChatServer extends RecursiveAction
 		clients = new Hashtable<String, Client>();
 	}
 	
+	/* main while loop to accept new clients */
 	@Override
 	protected void compute()
 	{
@@ -42,7 +43,6 @@ class ChatServer extends RecursiveAction
 	/* server sending message back to client */
 	public void sendMessageToClient(String name, String message)
 	{
-		/* FINISH THIS SECTION */
 		synchronized(this)
 		{
 			if(verbose)
@@ -58,7 +58,6 @@ class ChatServer extends RecursiveAction
 	}
 	
 	/* check if username or ip address is in the map */
-	/* FINISH THIS */
 	public boolean addClient(String userid, Client c)
 	{
 		synchronized(this)
@@ -80,16 +79,19 @@ class ChatServer extends RecursiveAction
 		}
 	}
 	
+	/* return a set of usernames */
 	public Set<String> getClients()
 	{
 		return clients.keySet();
 	}
 	
+	/* locate client in mapping */
 	public Client findClient(String userid)
 	{
 		return clients.get(userid);
 	}
 	
+	/* remove client from mapping */
 	public void removeClient(String userid)
 	{
 		clients.remove(userid);
