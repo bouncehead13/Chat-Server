@@ -41,7 +41,7 @@ class ChatServer extends RecursiveAction
 	}
 	
 	/* server sending message back to client */
-	public void sendMessageToClient(String name, String message)
+	public void sendMessageToClient(String name, String message, String fromUser)
 	{
 		synchronized(this)
 		{
@@ -53,7 +53,7 @@ class ChatServer extends RecursiveAction
 			}
 			
 			Client c = clients.get(name);
-			c.sendData(message, false);
+			c.sendData(message, fromUser);
 		}
 	}
 	

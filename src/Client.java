@@ -11,21 +11,20 @@ class Client implements Runnable
 	private DataOutputStream out;
 	private BufferedReader in;
 	private String ip, username;
-	private boolean signin, connectionLive;
-	private boolean verbose;
 	private String[] random;
 	private ArrayList<String> users;
+	private boolean signin, connectionLive, verbose;
+	private Integer received;
 	
 	public Client(Socket sock, boolean v, ChatServer s)
 	{
-		connection = sock;
-		server = s;
+		connection = sock; server = s;
 		ip = sock.getInetAddress().getHostAddress();
-		signin = true;
-		connectionLive = true;
+		signin = true; connectionLive = true;
 		verbose = v;
 		username = "";
 		initRandom();
+		received = 0;
 		users = new ArrayList<String>();
 		
 		try
@@ -107,7 +106,7 @@ class Client implements Runnable
 			/* make sure a username is provided */
 			if(message.length() == 5)
 			{
-				sendData("ERROR: Please enter a username", true);
+				sendData("ERROR: Please enter a username");
 				return;
 			}
 			
@@ -116,17 +115,17 @@ class Client implements Runnable
 			if(server.addClient(name, this))
 			{
 				signin = false;
-				sendData("OK", true);
+				sendData("OK");
 				username = name;
 			}
 			else
 			{
-				sendData("ERROR: Bad username/IP address", true);
+				sendData("ERROR: Bad username/IP address");
 			}
 		}
 		else
 		{
-			sendData("ERROR: You must sign in first", true);
+			sendData("ERROR: You must sign in first");
 		}
 	}
 	
@@ -161,7 +160,7 @@ class Client implements Runnable
 				System.out.print(" (" + ip + "): ");
 				System.out.println(command);
 			}
-			sendData("ERROR: Bad command", true);
+			sendData("ERROR: Bad command");
 		}
 			
 	}
@@ -171,7 +170,7 @@ class Client implements Runnable
 		/* check for correct arguments */
 		if(header.length != 3)
 		{
-			sendData("ERROR: Needs <from-user> <target-user>", true);
+			sendData("ERROR: Needs <from-user> <target-user>");
 			return;
 		}
 		
@@ -180,13 +179,13 @@ class Client implements Runnable
 		/* check argument and username match */
 		if(!user.equals(username))
 		{
-			sendData("ERROR: Bad <from-user>", true);
+			sendData("ERROR: Bad <from-user>");
 			return;
 		}
 		/* check username exists */
 		else if(server.findClient(toUser) == null)
 		{
-			sendData("ERROR: Bad <target-user>", true);
+			sendData("ERROR: Bad <target-user>");
 			return;
 		}
 		
@@ -208,7 +207,7 @@ class Client implements Runnable
 			System.out.println(server.findClient(header[2]).getIP() + "):");
 			System.out.println("  FROM " + username);
 		}
-		server.sendMessageToClient(toUser, wholeMessage);
+		server.sendMessageToClient(toUser, wholeMessage, username);
 	}
 	
 	private void broadcast(String[] header) throws IOException
@@ -216,7 +215,7 @@ class Client implements Runnable
 		/* check for correct arguments */
 		if(header.length != 2)
 		{
-			sendData("ERROR: Needs <from-user>", true);
+			sendData("ERROR: Needs <from-user>");
 			return;
 		}
 		
@@ -224,7 +223,7 @@ class Client implements Runnable
 		String user = header[1].toLowerCase();
 		if(!user.equals(username))
 		{
-			sendData("ERROR: Bad <from-user>", true);
+			sendData("ERROR: Bad <from-user>");
 			return;
 		}
 		
@@ -251,7 +250,7 @@ class Client implements Runnable
 				System.out.println(server.findClient(key).getIP() + "):");
 				System.out.println("  FROM " + username);
 			}
-			server.sendMessageToClient(key, wholeMessage);
+			server.sendMessageToClient(key, wholeMessage, username);
 		}
 	}
 	
@@ -261,7 +260,7 @@ class Client implements Runnable
 		/* check for correct arguments */
 		if(header.length != 3)
 		{
-			sendData("ERROR: Needs <from-user>", true);
+			sendData("ERROR: Needs <from-user>");
 			return;
 		}
 		
@@ -269,15 +268,15 @@ class Client implements Runnable
 		String user = header[2].toLowerCase();
 		if(!user.equals(username))
 		{
-			sendData("ERROR: Bad from-user", true);
+			sendData("ERROR: Bad from-user");
 			return;
 		}
 		
-		sendData("Here are the users", true);
-		sendData("==================", true);
+		sendData("Here are the users");
+		sendData("==================");
 		for(String key : server.getClients())
 		{
-			sendData("  " + key, true);
+			sendData("  " + key);
 		}
 	}
 	
@@ -287,7 +286,7 @@ class Client implements Runnable
 		/* check for correct arguments */
 		if(header.length != 2)
 		{
-			sendData("ERROR: Needs <from-user>", true);
+			sendData("ERROR: Needs <from-user>");
 			return;
 		}
 		
@@ -295,11 +294,11 @@ class Client implements Runnable
 		String user = header[1].toLowerCase();
 		if(!user.equals(username))
 		{
-			sendData("ERROR: Bad from-user", true);
+			sendData("ERROR: Bad from-user");
 			return;
 		}
 		
-		sendData("Logged out. Bye", true);
+		sendData("Logged out. Bye");
 		closeConnection();
 	}
 	
@@ -328,7 +327,7 @@ class Client implements Runnable
 				catch(NumberFormatException ex)
 				{
 					System.err.println(ex);
-					sendData("ERROR: Bad length", true);
+					sendData("ERROR: Bad length");
 					return "";
 				}
 			}
@@ -339,14 +338,14 @@ class Client implements Runnable
 					size = Integer.parseInt(sizeString);
 					if(size > 99)
 					{
-						sendData("ERROR: Bad length", true);
+						sendData("ERROR: Bad length");
 						return "";
 					}
 				}
 				catch(NumberFormatException ex)
 				{
 					System.err.println(ex);
-					sendData("ERROR: Bad length", true);
+					sendData("ERROR: Bad length");
 					return "";
 				}
 			}
@@ -383,18 +382,13 @@ class Client implements Runnable
 		return sentence;
 	}
 	
-	public void sendData(String message, boolean toClient)
+	/* send message internally */
+	public void sendData(String message)
 	{
 		try
 		{
-			String messageToClient = message;
-			if(!toClient)
-			{
-				messageToClient = convertMessage(message);
-			}
-			
-			out.writeBytes(messageToClient + "\n");
-			if(verbose && toClient)
+			out.writeBytes(message + "\n");
+			if(verbose)
 			{
 				if(username.equals(""))
 				{
@@ -404,6 +398,35 @@ class Client implements Runnable
 				{
 					System.out.println("SENT to " + username + " (" + ip + "): " + message);
 				}
+			}
+		}
+		catch(IOException ex)
+		{
+			System.err.println(ex);
+			System.out.println("sendData()");
+			closeConnection();
+		}
+	}
+	
+	/* send message from another client */
+	public void sendData(String message, String fromUser)
+	{
+		try
+		{
+			String messageToClient = message;
+			messageToClient = convertMessage(message);
+			
+			out.writeBytes(messageToClient + "\n");
+			
+			if(users.size() == 3)
+				users.remove(0);
+			users.add(fromUser);
+			received++;
+			
+			if(received == 3)
+			{
+				received = 0;
+				sendRandomMessage();
 			}
 		}
 		catch(IOException ex)
@@ -453,7 +476,7 @@ class Client implements Runnable
 			catch(NumberFormatException ex)
 			{
 				System.err.println(ex);
-				sendData("ERROR: Bad length", true);
+				sendData("ERROR: Bad length");
 				return -1;
 			}
 		}
@@ -466,7 +489,7 @@ class Client implements Runnable
 			catch(NumberFormatException ex)
 			{
 				System.err.println(ex);
-				sendData("ERROR: Bad length", true);
+				sendData("ERROR: Bad length");
 				return -1;
 			}
 		}
@@ -485,5 +508,35 @@ class Client implements Runnable
 		random[7] = "I love Network Programming :)";
 		random[8] = "I'm Olaf, and I like warm hugs!";
 		random[9] = "Instragram #selfie";
+	}
+	
+	private void sendRandomMessage()
+	{
+		Random rand = new Random();
+		int n_user = rand.nextInt(3);
+		int n_message = rand.nextInt(10);
+		
+		String user = users.get(n_user);
+		String message = random[n_message];
+		
+		try
+		{
+			out.writeBytes(message + "\n");
+		}
+		catch(IOException ex)
+		{
+			System.err.println(ex);
+			System.out.println("sendData()");
+			closeConnection();
+		}
+		
+		if(verbose)
+		{
+			System.out.print("SENT (randomly!) to " + username);
+			System.out.println(" (" + ip + "):");
+			System.out.println("  FROM " + user);
+			System.out.println("  " + message.length());
+			System.out.println("  " + message);
+		}
 	}
 }
