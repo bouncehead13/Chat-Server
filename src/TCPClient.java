@@ -122,26 +122,22 @@ class TCPClient extends Client
 
 	public void parseMessage(String command) throws IOException
 	{
-		/* split command by spaces */
-		command = command.trim();
-		String[] header = command.split(" ");
-
 		/* call the according command function */
-		if(header[0].equals("SEND"))
+		if(command.startsWith("SEND"))
 		{
-			send(header);
+			send(command.split(" "));
 		}
-		else if(header[0].equals("BROADCAST"))
+		else if(command.startsWith("BROADCAST"))
 		{
-			broadcast(header);
+			broadcast(command.split(" "));
 		}
-		else if(header[0].equals("WHO") && header[1].equals("HERE"))
+		else if(command.startsWith("WHO HERE"))
 		{
-			whoHere(header);
+			whoHere(command.split(" "));
 		}
-		else if(header[0].equals("LOGOUT"))
+		else if(command.startsWith("LOGOUT"))
 		{
-			logout(header);
+			logout(command.split(" "));
 		}
 		else
 		{
@@ -189,14 +185,13 @@ class TCPClient extends Client
 			System.out.print("RCVD from " + username);
 			System.out.println(" (" + ip + "):");
 
-			System.out.println("  SEND " + header[1] + " " + header[2]);
+			System.out.println("  SEND " + username + " " + header[2]);
 			String[] sentences = wholeMessage.split("\n");
-			for(int i=0; i<sentences.length; i++)
+			for(int i=1; i<sentences.length; i++)
 				System.out.println("  " + sentences[i]);
 
 			System.out.print("SENT to " + header[2] + " (");
 			System.out.println(server.findClient(header[2]).getIP() + "):");
-			System.out.println("  FROM " + username);
 		}
 		server.sendMessageToClient(toUser, wholeMessage, username);
 	}
@@ -229,7 +224,7 @@ class TCPClient extends Client
 
 			System.out.println("  BROADCAST");
 			String[] sentences = wholeMessage.split("\n");
-			for(int i=0; i<sentences.length; i++)
+			for(int i=1; i<sentences.length; i++)
 				System.out.println("  " + sentences[i]);
 		}
 
@@ -239,7 +234,6 @@ class TCPClient extends Client
 			{
 				System.out.print("SENT to " + key + " (");
 				System.out.println(server.findClient(key).getIP() + "):");
-				System.out.println("  FROM " + username);
 			}
 			server.sendMessageToClient(key, wholeMessage, username);
 		}
@@ -296,7 +290,7 @@ class TCPClient extends Client
 	private String getMessage() throws IOException
 	{
 		boolean chunked = false;
-		String wholeMessage = "", sizeString = "";
+		String wholeMessage = "FROM " + username, sizeString = "";
 		while(true)
 		{
 			chunked = false;
@@ -311,7 +305,7 @@ class TCPClient extends Client
 					size = Integer.parseInt(sizeString.substring(1));
 					if(size == 0)
 					{
-						wholeMessage = wholeMessage.concat("C0");
+						wholeMessage = wholeMessage.concat('\n' + "C0");
 						break;
 					}
 				}
@@ -352,12 +346,12 @@ class TCPClient extends Client
 				while(total != size)
 				{
 					String sentence = readData();
-					message = message.concat("\n" + sentence);
+					message = message.concat('\n' + sentence);
 					total += sentence.length();
 				}
 			}
 
-			wholeMessage = wholeMessage.concat(sizeString + "\n" + message + "\n");
+			wholeMessage = wholeMessage.concat('\n' + sizeString + '\n' + message);
 			if(!chunked)
 				break;
 		}
@@ -378,7 +372,7 @@ class TCPClient extends Client
 	{
 		try
 		{
-			out.writeBytes(message + "\n");
+			out.writeBytes(message + '\n');
 			if(verbose)
 			{
 				if(username.equals(""))
@@ -404,10 +398,7 @@ class TCPClient extends Client
 	{
 		try
 		{
-			String messageToClient = message;
-			messageToClient = convertMessage(message);
-
-			out.writeBytes(messageToClient + "\n");
+			out.writeBytes(message + '\n');
 
 			if(users.size() == 3)
 				users.remove(0);
@@ -427,7 +418,8 @@ class TCPClient extends Client
 			closeConnection();
 		}
 	}
-
+	
+	/* remove this code
 	private String convertMessage(String message)
 	{
 		String newMessage = "";
@@ -485,8 +477,7 @@ class TCPClient extends Client
 			}
 		}
 	}
-
-
+	*/
 
 	private void sendRandomMessage()
 	{
@@ -499,7 +490,7 @@ class TCPClient extends Client
 
 		try
 		{
-			out.writeBytes(message + "\n");
+			out.writeBytes(message + '\n');
 		}
 		catch(IOException ex)
 		{
