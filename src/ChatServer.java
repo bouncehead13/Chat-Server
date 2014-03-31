@@ -25,19 +25,8 @@ class ChatServer extends RecursiveAction
 	@Override
 	protected void compute()
 	{
-		try
-		{
-			server = new ServerSocket(port, 5);
-			while(true)
-			{
-				Socket connection = server.accept();
-				executor.submit(new Client(connection, verbose, this));
-			}
-		}
-		catch(IOException ex)
-		{
-			System.err.println(ex);
-		}
+		executor.submit(new TCPServer(port, verbose, this));
+		executor.submit(new UDPServer(port, verbose, this));
 	}
 	
 	/* server sending message back to client */
