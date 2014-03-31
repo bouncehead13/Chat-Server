@@ -42,7 +42,8 @@ class ChatServer extends RecursiveAction
 			}
 			
 			Client c = clients.get(name);
-			c.sendData(message, fromUser);
+			if(c instanceof TCPClient)
+				c.sendData(message, fromUser);
 		}
 	}
 	
@@ -52,14 +53,7 @@ class ChatServer extends RecursiveAction
 		synchronized(this)
 		{
 			if(!clients.containsKey(userid))
-			{
-				Enumeration<Client> values = clients.elements();
-				while (values.hasMoreElements())
-				{
-					if(c.getIP().equals(values.nextElement().getIP()))
-					   return false;
-				}
-				
+			{				
 				clients.put(userid, c);
 				return true;
 			}
