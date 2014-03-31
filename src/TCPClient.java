@@ -290,7 +290,7 @@ class TCPClient extends Client
 	private String getMessage() throws IOException
 	{
 		boolean chunked = false;
-		String wholeMessage = "FROM " + username, sizeString = "";
+		String wholeMessage = "FROM " + username + '\n', sizeString = "";
 		while(true)
 		{
 			chunked = false;
@@ -335,23 +335,19 @@ class TCPClient extends Client
 				}
 			}
 
-			String message = readData();
-			if(!chunked && message.length() > size)
+			String message = "";
+			if(!chunked)
 			{
-				message = message.substring(0, size);
+				message = readData();
 			}
 			else if(chunked)
 			{
-				int total = message.length();
-				while(total != size)
-				{
-					String sentence = readData();
-					message = message.concat('\n' + sentence);
-					total += sentence.length();
-				}
+				char[] buff = new char[size];
+				in.read(buff, 0, size);
+				message = new String(buff);
 			}
 
-			wholeMessage = wholeMessage.concat('\n' + sizeString + '\n' + message);
+			wholeMessage = wholeMessage.concat(sizeString + '\n' + message);
 			if(!chunked)
 				break;
 		}
