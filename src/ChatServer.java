@@ -34,16 +34,38 @@ class ChatServer extends RecursiveAction
 	{
 		synchronized(this)
 		{
+			boolean chunked = false;
+			String[] sentences = message.split("\n");
+			
+			/* determine if it is a chunkced message */
+			if(sentences[1].startsWith("C"))
+			{
+				chunked = true;
+			}
+			
 			if(verbose)
 			{
-				String[] sentences = message.split("\n");
+				
 				for(int i=0; i<sentences.length; i++)
 					System.out.println("  " + sentences[i]);
 			}
 			
 			Client c = clients.get(name);
-			if(c instanceof TCPClient)
+			
+			/* if chunked, only send to TCP connections */
+			if(chunked)
+			{
+				if(c instanceof TCPClient)
+				{
+					c.sendData(message, fromUser);
+				}
+			}
+			
+			/* send to either TCP or UDP when not chunked */
+			else
+			{
 				c.sendData(message, fromUser);
+			}
 		}
 	}
 	
