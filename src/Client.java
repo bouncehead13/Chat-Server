@@ -7,7 +7,7 @@ import java.util.*;
 abstract class Client implements Runnable
 {
 	protected ChatServer server;
-	protected String ip, username;
+	protected String ip, username, fullname;
 	protected String[] random;
 	protected ArrayList<String> users;
 	protected int port;
