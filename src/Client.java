@@ -60,5 +60,6 @@ abstract class Client implements Runnable
 	public void changeIP(InetAddress newIP)
 	{
 		IPAddress = newIP;
+		ip = newIP.getHostAddress();
 	}
 }

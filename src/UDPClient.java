@@ -202,7 +202,7 @@ class UDPClient extends Client
 		
 		if(verbose)
 		{
-			System.out.println("RCVD from " + username + "  (" + ip + "):");
+			System.out.println("RCVD from " + user + "  (" + ip + "):");
 
 			System.out.println("  BROADCAST");
 			String[] sentences = sendMessage.split("\\n");
@@ -272,7 +272,7 @@ class UDPClient extends Client
 		
 		if(verbose)
 		{
-			System.out.println("RCVD from " + user + " (" + ip + "): LOGOUT " + user);
+			System.out.println("RCVD from " + username + " (" + ip + "): LOGOUT " + username);
 		}
 		
 		sendData("Logged out. Bye");
@@ -285,10 +285,13 @@ class UDPClient extends Client
 		
 		if(client != null)
 		{
-			if(ip != client.getIP())
+			System.out.println("ip1 " + ip + " ip2 " + client.getIP());
+			if(!ip.equals(client.getIP()))
 			{
+				System.out.print("Updated: " + username);
 				server.updateIP(user, recvMessage.getAddress());
 				username = server.findClientName(ip);
+				System.out.println(" with " + username);
 			}
 		}
 		else
@@ -372,6 +375,7 @@ class UDPClient extends Client
 	/* send message from another client */
 	public void sendData(String message, String fromUser)
 	{
+		System.out.println("User: " + username + "  ip: " + ip);
 		try
 		{	
 			DatagramPacket sendPacket = new DatagramPacket(message.getBytes(), message.getBytes().length, IPAddress, port);
