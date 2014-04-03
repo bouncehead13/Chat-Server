@@ -158,7 +158,7 @@ class TCPClient extends Client
 	private void send(String[] header) throws IOException
 	{
 		/* check for correct arguments */
-		if(header.length != 3)
+		if(header.length < 3)
 		{
 			sendData("ERROR: Needs <from-user> <target-user>");
 			return;
@@ -178,7 +178,12 @@ class TCPClient extends Client
 			sendData("ERROR: Bad <target-user>");
 			return;
 		}
-
+		else if(header.length > 3)
+		{
+			sendManyUsers(header);
+			return;
+		}
+		
 		/* read in entire message content */
 		String wholeMessage = getMessage();
 		if(wholeMessage == null)
@@ -198,7 +203,37 @@ class TCPClient extends Client
 		}
 		server.sendMessageToClient(toUser, wholeMessage, username);
 	}
-
+	
+	private void sendManyUsers(String[] header) throws IOException
+	{
+		String user = header[1].toLowerCase();
+		
+		/* read in entire message content */
+		String wholeMessage = getMessage();
+		if(wholeMessage == null)
+			return;
+		
+		if(verbose)
+		{
+			System.out.println("RCVD from " + fullname);
+			
+			System.out.println("  SEND " + username + " " + header[2]);
+			String[] sentences = wholeMessage.split("\\n");
+			for(int i=1; i<sentences.length; i++)
+				System.out.println("  " + sentences[i]);
+		}
+		
+		for(int i=2; i<header.length; i++)
+		{
+			if(verbose)
+			{
+				System.out.print("SENT to " + header[i] + " (");
+				System.out.println(server.findClient(header[i]).getIP() + "):");
+			}
+			server.sendMessageToClient(header[i], wholeMessage, username);
+		}
+	}
+	
 	private void broadcast(String[] header) throws IOException
 	{
 		/* check for correct arguments */
