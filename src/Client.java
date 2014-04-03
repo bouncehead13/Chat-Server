@@ -11,6 +11,7 @@ abstract class Client implements Runnable
 	protected String[] random;
 	protected ArrayList<String> users;
 	protected int port;
+	protected InetAddress IPAddress;
 	
 	public abstract void run();
 	public abstract void sendData(String message, String fromUser);
@@ -40,5 +41,10 @@ abstract class Client implements Runnable
 	public String getIP()
 	{
 		return ip;
+	}
+	
+	public void changeIP(InetAddress newIP)
+	{
+		IPAddress = newIP;
 	}
 }

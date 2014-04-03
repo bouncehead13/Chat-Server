@@ -101,4 +101,9 @@ class ChatServer extends RecursiveAction
 	{
 		clients.remove(userid);
 	}
+	
+	public void updateIP(String user, InetAddress ip)
+	{
+		findClient(user).changeIP(ip);
+	}
 }

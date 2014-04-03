@@ -181,7 +181,7 @@ class TCPClient extends Client
 
 		/* read in entire message content */
 		String wholeMessage = getMessage();
-		if(wholeMessage.equals(""))
+		if(wholeMessage == null)
 			return;
 
 		if(verbose)
@@ -189,7 +189,7 @@ class TCPClient extends Client
 			System.out.println("RCVD from " + fullname);
 
 			System.out.println("  SEND " + username + " " + header[2]);
-			String[] sentences = wholeMessage.split("\n");
+			String[] sentences = wholeMessage.split("\\n");
 			for(int i=1; i<sentences.length; i++)
 				System.out.println("  " + sentences[i]);
 
@@ -218,7 +218,7 @@ class TCPClient extends Client
 		
 		/* read in entire message content */
 		String wholeMessage = getMessage();
-		if(wholeMessage.equals(""))
+		if(wholeMessage == null)
 			return;
 
 		if(verbose)
@@ -226,7 +226,7 @@ class TCPClient extends Client
 			System.out.println("RCVD from " + fullname);
 
 			System.out.println("  BROADCAST");
-			String[] sentences = wholeMessage.split("\n");
+			String[] sentences = wholeMessage.split("\\n");
 			for(int i=1; i<sentences.length; i++)
 				System.out.println("  " + sentences[i]);
 		}
@@ -326,7 +326,7 @@ class TCPClient extends Client
 				{
 					System.err.println(ex);
 					sendData("ERROR: Bad length");
-					return "";
+					return null;
 				}
 			}
 			else if(!chunked)
@@ -337,14 +337,14 @@ class TCPClient extends Client
 					if(size > 99)
 					{
 						sendData("ERROR: Bad length");
-						return "";
+						return null;
 					}
 				}
 				catch(NumberFormatException ex)
 				{
 					System.err.println(ex);
 					sendData("ERROR: Bad length");
-					return "";
+					return null;
 				}
 			}
 			
@@ -359,7 +359,7 @@ class TCPClient extends Client
 				break;
 		}
 
-		return wholeMessage.trim();
+		return wholeMessage;
 	}
 
 	/* read in a line of text */
@@ -381,7 +381,7 @@ class TCPClient extends Client
 			{
 				if(username.equals(""))
 				{
-					System.out.println("SENT to " + ip + " " + message);
+					System.out.println("SENT to " + ip + ": " + message);
 				}
 				else
 				{
@@ -437,19 +437,19 @@ class TCPClient extends Client
 		try
 		{
 			out.writeBytes(header + '\n' + size + '\n' + message + '\n');
+			
+			if(verbose)
+			{
+				System.out.print("SENT (randomly!) to " + username);
+				System.out.println(" (" + ip + "):");
+				System.out.println("  " + header);
+				System.out.println("  " + size);
+				System.out.println("  " + message);
+			}
 		}
 		catch(IOException ex)
 		{
 			closeConnection();
-		}
-
-		if(verbose)
-		{
-			System.out.print("SENT (randomly!) to " + username);
-			System.out.println(" (" + ip + "):");
-			System.out.println("  " + header);
-			System.out.println("  " + size);
-			System.out.println("  " + message);
 		}
 	}
 }
