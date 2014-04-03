@@ -12,7 +12,7 @@ abstract class Client implements Runnable
 	protected ArrayList<String> users;
 	protected int port;
 	protected InetAddress IPAddress;
-	
+
 	public abstract void run();
 	public abstract void sendData(String message, String fromUser);
 	public abstract void sendData(String message);
@@ -21,6 +21,20 @@ abstract class Client implements Runnable
 	{
 		initRandom();
 		users = new ArrayList<String>();
+	}
+	
+	public String arrayToString(String[] a, String separator)
+	{
+		String result = "";
+		if (a.length > 2)
+		{
+			result = a[2];
+			for (int i=3; i<a.length; i++)
+			{
+				result = result + separator + a[i];
+			}
+		}
+		return result;
 	}
 	
 	protected void initRandom()

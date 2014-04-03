@@ -96,6 +96,20 @@ class ChatServer extends RecursiveAction
 		return clients.get(userid);
 	}
 	
+	public String findClientName(String ip)
+	{
+		Iterator itr=clients.keySet().iterator();
+		while(itr.hasNext())
+		{
+			String key = (String) itr.next();
+			String value = clients.get(key).getIP();
+			if(value.equals(ip))
+				return key;
+		}
+		
+		return "";
+	}
+	
 	/* remove client from mapping */
 	public void removeClient(String userid)
 	{

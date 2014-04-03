@@ -207,6 +207,7 @@ class TCPClient extends Client
 	private void sendManyUsers(String[] header) throws IOException
 	{
 		String user = header[1].toLowerCase();
+		String allnames = arrayToString(header, " ");
 		
 		/* read in entire message content */
 		String wholeMessage = getMessage();
@@ -217,7 +218,7 @@ class TCPClient extends Client
 		{
 			System.out.println("RCVD from " + fullname);
 			
-			System.out.println("  SEND " + username + " " + header[2]);
+			System.out.println("  SEND " + username + " " + allnames);
 			String[] sentences = wholeMessage.split("\\n");
 			for(int i=1; i<sentences.length; i++)
 				System.out.println("  " + sentences[i]);
@@ -282,9 +283,15 @@ class TCPClient extends Client
 	private void whoHere(String[] header)
 	{
 		/* check for correct arguments */
+		String message = "RCVD from " + fullname + " WHO HERE " + username;
+		
 		if(header.length != 3)
 		{
 			sendData("ERROR: Needs <from-user>");
+			if(verbose)
+			{
+				System.out.println(message);
+			}
 			return;
 		}
 
@@ -293,13 +300,16 @@ class TCPClient extends Client
 		if(!user.equals(username))
 		{
 			sendData("ERROR: Bad from-user");
+			if(verbose)
+			{
+				System.out.println(message);
+			}
 			return;
 		}
 		
 		if(verbose)
 		{
-			System.out.print("RCVD from " + fullname + " ");
-			System.out.println("WHO HERE " + username);
+			System.out.println(message);
 		}
 		
 		sendData("Here are the users");
@@ -313,9 +323,15 @@ class TCPClient extends Client
 	/* log client out */
 	private void logout(String[] header)
 	{
+		String message = "RCVD from " + username + " (" + ip + "): LOGOUT " + username;
+		
 		/* check for correct arguments */
 		if(header.length != 2)
 		{
+			if(verbose)
+			{
+				System.out.println(message);
+			}
 			sendData("ERROR: Needs <from-user>");
 			return;
 		}
@@ -324,10 +340,19 @@ class TCPClient extends Client
 		String user = header[1].toLowerCase();
 		if(!user.equals(username))
 		{
+			if(verbose)
+			{
+				System.out.println(message);
+			}
 			sendData("ERROR: Bad from-user");
 			return;
 		}
-
+		
+		if(verbose)
+		{
+			System.out.println(message);
+		}
+		
 		sendData("Logged out. Bye");
 		closeConnection();
 	}
@@ -359,7 +384,6 @@ class TCPClient extends Client
 				}
 				catch(NumberFormatException ex)
 				{
-					System.err.println(ex);
 					sendData("ERROR: Bad length");
 					return null;
 				}
@@ -377,7 +401,6 @@ class TCPClient extends Client
 				}
 				catch(NumberFormatException ex)
 				{
-					System.err.println(ex);
 					sendData("ERROR: Bad length");
 					return null;
 				}
@@ -405,7 +428,7 @@ class TCPClient extends Client
 		if(sentence == null) throw new IOException();
 		return sentence;
 	}
-
+	
 	/* send message internally */
 	public void sendData(String message)
 	{

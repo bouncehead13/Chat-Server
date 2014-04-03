@@ -21,7 +21,7 @@ class UDPClient extends Client
 		port = packet.getPort();
 		ip = packet.getAddress().getHostAddress();
 		verbose = v;
-		username = "";
+		username = server.findClientName(ip);
 		received = 0;
 	}
 
@@ -30,7 +30,7 @@ class UDPClient extends Client
 		parseUDPMessage(new String(recvMessage.getData()));
 	}
 	
-	public void parseUDPMessage(String s)
+	private void parseUDPMessage(String s)
 	{	
 		if (s.startsWith("ME IS"))
 		{
@@ -59,12 +59,12 @@ class UDPClient extends Client
 		}
 	}
 	
-	public void send(String message)
+	private void send(String message)
 	{
 		String messageByParts[] = message.split("\\n", 3);
 		String header[] = messageByParts[0].split(" ");
 		
-		if(header.length != 3)
+		if(header.length < 3)
 		{
 			sendData("ERROR: Needs <from-user> <target-user>");
 			return;
@@ -83,6 +83,11 @@ class UDPClient extends Client
 			sendData("ERROR: Bad <target-user>");
 			return;
 		}
+		else if(header.length > 3)
+		{
+			sendMultipleUsers(header, messageByParts);
+			return;
+		}
 		
 		try
 		{
@@ -95,15 +100,15 @@ class UDPClient extends Client
 		}
 		catch(NumberFormatException ex)
 		{
-			System.err.println(ex);
 			sendData("ERROR: Bad length");
 			return;
-		} 
+		}
+		
 		String sendMessage = "FROM " + user + '\n' + messageByParts[1] + '\n' + messageByParts[2];
 		
 		if(verbose)
 		{
-			System.out.println("RCVD from " + user);
+			System.out.println("RCVD from " + user + " (" + ip + "):");
 
 			System.out.println("  SEND " + user + " " + header[2]);
 			String[] sentences = sendMessage.split("\\n");
@@ -117,7 +122,50 @@ class UDPClient extends Client
 		server.sendMessageToClient(toUser, sendMessage, user);
 	}
 	
-	public void broadcast(String message)
+	private void sendMultipleUsers(String[] header, String[] messageByParts)
+	{
+		String user = header[1].toLowerCase();
+		String allnames = arrayToString(header, " ");
+		
+		try
+		{
+			Integer size = Integer.parseInt(messageByParts[1]);
+			if(size > 99)
+			{
+				sendData("ERROR: Bad length");
+				return;
+			}
+		}
+		catch(NumberFormatException ex)
+		{
+			sendData("ERROR: Bad length");
+			return;
+		}
+		
+		String sendMessage = "FROM " + user + '\n' + messageByParts[1] + '\n' + messageByParts[2];
+		
+		if(verbose)
+		{
+			System.out.println("RCVD from " + user + " (" + ip + "):");
+			
+			System.out.println("  SEND " + user + " " + allnames);
+			String[] sentences = sendMessage.split("\\n");
+			for(int i=1; i<sentences.length; i++)
+				System.out.println("  " + sentences[i]);
+		}
+		
+		for(int i=2; i<header.length; i++)
+		{
+			if(verbose)
+			{
+				System.out.print("SENT to " + header[i] + " (");
+				System.out.println(server.findClient(header[i]).getIP() + "):");
+			}
+			server.sendMessageToClient(header[i], sendMessage, user);
+		}
+	}
+	
+	private void broadcast(String message)
 	{
 		String messageByParts[] = message.split("\\n", 3);
 		String header[] = messageByParts[0].split(" ");
@@ -147,7 +195,6 @@ class UDPClient extends Client
 		}
 		catch(NumberFormatException ex)
 		{
-			System.err.println(ex);
 			sendData("ERROR: Bad length");
 			return;
 		} 
@@ -155,7 +202,7 @@ class UDPClient extends Client
 		
 		if(verbose)
 		{
-			System.out.println("RCVD from " + fullname);
+			System.out.println("RCVD from " + username + "  (" + ip + "):");
 
 			System.out.println("  BROADCAST");
 			String[] sentences = sendMessage.split("\\n");
@@ -194,8 +241,7 @@ class UDPClient extends Client
 
 		if(verbose)
 		{
-			System.out.print("RCVD from " + ip + ": ");
-			System.out.println("WHO HERE " + username);
+			System.out.println("RCVD from " + username + " (" + ip + "): WHO HERE " + username);
 		}
 
 		sendData("Here are the users");
@@ -223,12 +269,17 @@ class UDPClient extends Client
 			sendData("ERROR: Bad from-user");
 			return;
 		}
-
+		
+		if(verbose)
+		{
+			System.out.println("RCVD from " + user + " (" + ip + "): LOGOUT " + user);
+		}
+		
 		sendData("Logged out. Bye");
 		closeConnection(user);
 	}
 	
-	public boolean checkIP(String user)
+	private boolean checkIP(String user)
 	{
 		Client client = server.findClient(user);
 		
@@ -237,6 +288,7 @@ class UDPClient extends Client
 			if(ip != client.getIP())
 			{
 				server.updateIP(user, recvMessage.getAddress());
+				username = server.findClientName(ip);
 			}
 		}
 		else
@@ -247,15 +299,21 @@ class UDPClient extends Client
 		return true;
 	}
 
-	public void parseSignInUDP(String message, int argc, int fromUserIndex)
+	private void parseSignInUDP(String message, int argc, int fromUserIndex)
 	{
 		message = message.trim();
 		String[] info = message.split(" ");
 		
 		if(verbose)
 		{
-			System.out.print("RCVD from " + ip);
-			System.out.println(": " + message);
+			if(username.equals(""))
+			{
+				System.out.println("RCVD from " + ip + ": " + message);
+			}
+			else
+			{
+				System.out.println("RCVD from " + username + " (" + ip + "): " + message);
+			}
 		}
 		
 		if (info.length != argc)
@@ -348,15 +406,15 @@ class UDPClient extends Client
 		String header = "FROM " + user;
 		String size = Integer.toString(message.length());
 		
-		message = header + '\n' + size + '\n' + message + '\n';
+		String returnMessage = header + '\n' + size + '\n' + message + '\n';
 		try
 		{
-			DatagramPacket sendPacket = new DatagramPacket(message.getBytes(), message.getBytes().length, IPAddress, port);
+			DatagramPacket sendPacket = new DatagramPacket(returnMessage.getBytes(), returnMessage.getBytes().length, IPAddress, port);
 			connection.send(sendPacket);
 			
 			if(verbose)
 			{
-				System.out.print("SENT (randomly!) to (" + ip + "):");
+				System.out.println("SENT (randomly!) to (" + ip + "):");
 				System.out.println("  FROM " + user);
 				System.out.println("  " + message.length());
 				System.out.println("  " + message);
