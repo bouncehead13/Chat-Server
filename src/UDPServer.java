@@ -1,3 +1,8 @@
+/*
+ *  Benjamin Ciummo
+ *  Matt Hancock
+ *  Eric Lowry
+ */
 package src;
 
 import java.io.*;

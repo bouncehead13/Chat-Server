@@ -1,9 +1,15 @@
+/*
+ *  Benjamin Ciummo
+ *  Matt Hancock
+ *  Eric Lowry
+ */
 package src;
 
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
+// Abstract class to implement TCP and UDP clients
 abstract class Client implements Runnable
 {
 	protected ChatServer server;
@@ -39,6 +45,7 @@ abstract class Client implements Runnable
 		return result;
 	}
 	
+	// Random messages
 	protected void initRandom()
 	{
 		random = new String[10];
