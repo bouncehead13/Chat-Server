@@ -1,3 +1,8 @@
+/*
+ *  Benjamin Ciummo
+ *  Matt Hancock
+ *  Eric Lowry
+ */
 package src;
 
 import java.io.*;
@@ -44,10 +49,12 @@ class TCPClient extends Client
 			try
 			{
 				String sentence = readData();
+				// If the user is not signed in, attempt a sign in
 				if(signin)
 				{
 					parseSignin(sentence);
 				}
+				// Already signed in, parse a message
 				else
 				{
 					parseMessage(sentence);
@@ -84,6 +91,7 @@ class TCPClient extends Client
 		}
 	}
 
+	// Parse a sign in attempt
 	public void parseSignin(String message)
 	{
 		message = message.trim();
@@ -112,7 +120,7 @@ class TCPClient extends Client
 				
 				/* create fullname with IP address */
 				fullname = username + " (" + ip + "):";
-				error = "RCVD from " + fullname + " message with error";
+				error = "RCVD from " + fullname + " Bad request";
 				
 			}
 			else
@@ -120,12 +128,14 @@ class TCPClient extends Client
 				sendData("ERROR: Bad username/IP address");
 			}
 		}
+		// Attempted an action other that sign in
 		else
 		{
 			sendData("ERROR: You must sign in first");
 		}
 	}
 
+	// Parse a message
 	public void parseMessage(String command) throws IOException
 	{
 		/* call the according command function */
@@ -156,6 +166,7 @@ class TCPClient extends Client
 		}
 	}
 
+	// Process a send request
 	private void send(String[] header) throws IOException
 	{
 		/* check for correct arguments */
@@ -204,6 +215,7 @@ class TCPClient extends Client
 		if(wholeMessage == null)
 			return;
 
+		// Server output
 		if(verbose)
 		{
 			System.out.println("RCVD from " + fullname);
@@ -219,8 +231,10 @@ class TCPClient extends Client
 		server.sendMessageToClient(toUser, wholeMessage, username);
 	}
 	
+	// Send message to multiple users
 	private void sendManyUsers(String[] header) throws IOException
 	{
+		// from user
 		String user = header[1].toLowerCase();
 		
 		/* combine header to create string of all names */
@@ -231,6 +245,7 @@ class TCPClient extends Client
 		if(wholeMessage == null)
 			return;
 		
+		// Server output
 		if(verbose)
 		{
 			System.out.println("RCVD from " + fullname);
@@ -241,6 +256,7 @@ class TCPClient extends Client
 				System.out.println("  " + sentences[i]);
 		}
 		
+		// Send message to each requested user
 		for(int i=2; i<header.length; i++)
 		{
 			if(verbose)
@@ -252,6 +268,7 @@ class TCPClient extends Client
 		}
 	}
 	
+	// Process a broadcast request
 	private void broadcast(String[] header) throws IOException
 	{
 		/* check for correct arguments */
@@ -282,6 +299,7 @@ class TCPClient extends Client
 		if(wholeMessage == null)
 			return;
 		
+		// Server output
 		if(verbose)
 		{
 			System.out.println("RCVD from " + fullname);
@@ -337,6 +355,7 @@ class TCPClient extends Client
 			System.out.println(message + user);
 		}
 		
+		// Send the list of users to the client
 		sendData("Here are the users");
 		sendData("==================");
 		for(String key : server.getClients())
@@ -373,6 +392,7 @@ class TCPClient extends Client
 			return;
 		}
 		
+		// Server output
 		if(verbose)
 		{
 			System.out.println(message + user);
@@ -382,10 +402,11 @@ class TCPClient extends Client
 		closeConnection();
 	}
 
-	/* get chunked or single message */
+	/* get chunked or nonchunked message */
 	private String getMessage() throws IOException
 	{
 		boolean chunked = false;
+		// Add the from tag
 		String wholeMessage = "FROM " + username + '\n', sizeString = "";
 		while(true)
 		{
@@ -399,35 +420,42 @@ class TCPClient extends Client
 				chunked = true;
 				try
 				{
+					// Get the chunk size
 					size = Integer.parseInt(sizeString.substring(1));
+					
+					// Size of 0, done receiving
 					if(size == 0)
 					{
 						/* concat new message to whole message */
 						wholeMessage = wholeMessage.concat("C0");
 						break;
 					}
+					// Chunk > 999 bytes, return an error
 					else if(size > 999)
 					{
 						if(verbose)
 						{
 							System.out.println(error);
 						}
-						sendData("ERROR: Bad length");
+						sendData("ERROR: Bad length1");
 						return null;
 					}
 				}
+				// Bad chunk size
 				catch(NumberFormatException ex)
 				{
 					if(verbose)
 					{
 						System.out.println(error);
 					}
-					sendData("ERROR: Bad length");
+					sendData("ERROR: Bad length2");
 					return null;
 				}
 			}
+			// non chunked message
 			else if(!chunked)
 			{
+				// attempt to read the size
 				try
 				{
 					size = Integer.parseInt(sizeString);
@@ -437,7 +465,7 @@ class TCPClient extends Client
 						{
 							System.out.println(error);
 						}
-						sendData("ERROR: Bad length");
+						sendData("ERROR: Bad length3");
 						return null;
 					}
 				}
@@ -447,7 +475,7 @@ class TCPClient extends Client
 					{
 						System.out.println(error);
 					}
-					sendData("ERROR: Bad length");
+					sendData("ERROR: Bad length4");
 					return null;
 				}
 			}
@@ -463,7 +491,7 @@ class TCPClient extends Client
 				break;
 		}
 
-		return wholeMessage.trim();
+		return wholeMessage;
 	}
 
 	/* read in a line of text */
@@ -480,6 +508,7 @@ class TCPClient extends Client
 	{
 		try
 		{
+			// Write to out socket
 			out.writeBytes(message + '\n');
 			if(verbose)
 			{
@@ -493,6 +522,7 @@ class TCPClient extends Client
 				}
 			}
 		}
+		// Write failed, user disconnected
 		catch(IOException ex)
 		{
 			closeConnection();
@@ -519,12 +549,15 @@ class TCPClient extends Client
 				sendRandomMessage();
 			}
 		}
+		
+		// Write failed, user disconnected
 		catch(IOException ex)
 		{
 			closeConnection();
 		}
 	}
 
+	// Send a random message
 	private void sendRandomMessage()
 	{
 		/* pick a user and a message */
@@ -539,6 +572,7 @@ class TCPClient extends Client
 		String header = "FROM " + user;
 		String size = Integer.toString(message.length());
 		
+		// send the message
 		try
 		{
 			out.writeBytes(header + '\n' + size + '\n' + message + '\n');

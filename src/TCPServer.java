@@ -1,3 +1,8 @@
+/*
+ *  Benjamin Ciummo
+ *  Matt Hancock
+ *  Eric Lowry
+ */
 package src;
 
 import java.io.*;
@@ -26,7 +31,7 @@ class TCPServer implements Runnable
 	{
 		try
 		{
-			server = new ServerSocket(port, 5);
+			server = new ServerSocket(port, 32);
 			while(true)
 			{
 				Socket connection = server.accept();
