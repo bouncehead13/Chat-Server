@@ -1,3 +1,8 @@
+/*
+ *  Benjamin Ciummo
+ *  Matt Hancock
+ *  Eric Lowry
+ */
 package src;
 
 import java.io.*;
@@ -5,12 +10,12 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-class ChatServer extends RecursiveAction
+class ChatServer implements Runnable
 {
 	private Integer port;
 	private ServerSocket server;
 	private ExecutorService executor;
-	private Hashtable<String, Client> clients;
+	private volatile Hashtable<String, Client> clients;
 	private boolean verbose;
 	
 	public ChatServer(Integer p, boolean v)
@@ -22,9 +27,9 @@ class ChatServer extends RecursiveAction
 	}
 	
 	/* main while loop to accept new clients */
-	@Override
-	protected void compute()
+	public void run()
 	{
+		// Create a TCP and UDP listener
 		executor.submit(new TCPServer(port, verbose, this));
 		executor.submit(new UDPServer(port, verbose, this));
 	}
@@ -37,7 +42,7 @@ class ChatServer extends RecursiveAction
 			boolean chunked = false;
 			String[] sentences = message.split("\n");
 			
-			/* determine if it is a chunkced message */
+			/* determine if it is a chunked message */
 			if(sentences[1].startsWith("C"))
 			{
 				chunked = true;
@@ -45,9 +50,11 @@ class ChatServer extends RecursiveAction
 			
 			if(verbose)
 			{
-				
-				for(int i=0; i<sentences.length; i++)
-					System.out.println("  " + sentences[i]);
+				synchronized(this)
+				{
+					for(int i=0; i<sentences.length; i++)
+						System.out.println("  " + sentences[i]);
+				}
 			}
 			
 			Client c = clients.get(name);

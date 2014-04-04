@@ -1,7 +1,13 @@
+/*
+ *  Benjamin Ciummo
+ *  Matt Hancock
+ *  Eric Lowry
+ */
 package src;
 
+import java.io.*;
 import java.util.*;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.*;
 
 class RunServer
 {
@@ -17,7 +23,7 @@ class RunServer
 		}
 		
 		/* initialize variables */
-		ForkJoinPool pool = new ForkJoinPool(args.length);
+		ExecutorService executor = Executors.newCachedThreadPool();
 		List<Integer> ports = new ArrayList<Integer>();
 		boolean verbose = false;
 		
@@ -35,13 +41,21 @@ class RunServer
 			System.exit(1);
 		}
 		
-		/* create servers */
+		/* create a server universe for each port */
 		for(int i=0; i<args.length; i++)
 		{
 			if(!args[i].equals("-v"))
 			{
-				ports.add(Integer.parseInt(args[i]));
-				pool.invoke(new ChatServer(Integer.parseInt(args[i]), verbose));
+				try
+				{
+					Integer port = Integer.parseInt(args[i]);
+					ports.add(port);
+					executor.submit(new ChatServer(port, verbose));
+				}
+				catch(NumberFormatException e)
+				{
+					System.out.println(args[i] + " not a valid port, ignoring it");
+				}
 			}
 		}
 	}
