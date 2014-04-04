@@ -174,6 +174,7 @@ class TCPClient extends Client
 
 		String user = header[1].toLowerCase();
 		String toUser = header[2].toLowerCase();
+		
 		/* check argument and username match */
 		if(!user.equals(username))
 		{
@@ -194,6 +195,7 @@ class TCPClient extends Client
 			sendData("ERROR: Bad <target-user>");
 			return;
 		}
+		/* more than one username found to send to */
 		else if(header.length > 3)
 		{
 			sendManyUsers(command);
@@ -218,6 +220,8 @@ class TCPClient extends Client
 		String[] header = command.split(" ");
 		
 		String user = header[1].toLowerCase();
+		
+		/* combine header to create string of all names */
 		String allnames = arrayToString(header, " ", 2);
 		
 		/* read in entire message content */
@@ -361,6 +365,7 @@ class TCPClient extends Client
 	/* get chunked or single message */
 	private String getMessage(String command) throws IOException
 	{
+		/* first print command to log */
 		if(verbose)
 		{
 			System.out.println("\n  " + command);
@@ -374,6 +379,7 @@ class TCPClient extends Client
 			sizeString = readData().trim();
 			Integer size = 0;
 			
+			/* print the size */
 			if(verbose)
 			{
 				System.out.println("  " + sizeString);
@@ -422,6 +428,7 @@ class TCPClient extends Client
 			in.read(buff, 0, size);
 			String message = new String(buff);
 			
+			/* print the message */
 			if(verbose)
 			{
 				System.out.print("  " + message);
@@ -505,6 +512,7 @@ class TCPClient extends Client
 		String user = users.get(n_user);
 		String message = random[n_message];
 		
+		/* create header string and size string */
 		String header = "FROM " + user;
 		String size = Integer.toString(message.length());
 		

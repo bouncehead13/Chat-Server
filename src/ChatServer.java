@@ -96,6 +96,7 @@ class ChatServer extends RecursiveAction
 		return clients.get(userid);
 	}
 	
+	/* find client given and IP address */
 	public String findClientName(String ip)
 	{
 		Iterator itr=clients.keySet().iterator();
@@ -107,6 +108,7 @@ class ChatServer extends RecursiveAction
 				return key;
 		}
 		
+		/* user not found */
 		return "";
 	}
 	
@@ -116,6 +118,7 @@ class ChatServer extends RecursiveAction
 		return clients.remove(userid);
 	}
 	
+	/* update the IP address for the UDP client */
 	public void updateIP(String user, InetAddress ip)
 	{
 		findClient(user).changeIP(ip);

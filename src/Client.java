@@ -24,6 +24,7 @@ abstract class Client implements Runnable
 		users = new ArrayList<String>();
 	}
 	
+	/* convert array of strings into a string */
 	public String arrayToString(String[] a, String separator, Integer start)
 	{
 		String result = "";
@@ -53,21 +54,25 @@ abstract class Client implements Runnable
 		random[9] = "Instragram #selfie";
 	}
 	
+	/* get IP address */
 	public String getIP()
 	{
 		return ip;
 	}
 	
+	/* get number of received messages */
 	public Integer getReceived()
 	{
 		return received;
 	}
 	
+	/* get array of past users */
 	public ArrayList<String> getList()
 	{
 		return users;
 	}
 	
+	/* change IP address for UDP clients */
 	public void changeIP(InetAddress newIP)
 	{
 		IPAddress = newIP;
