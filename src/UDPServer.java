@@ -40,7 +40,7 @@ class UDPServer implements Runnable
 				byte[] receiveData = new byte[1024];
 				DatagramPacket packet = new DatagramPacket(receiveData, receiveData.length);
 				socket.receive(packet);
-				executor.submit(new UDPClient(packet, socket, verbose, server));
+				executor.submit(new UDPClient(packet, socket, verbose, server, new ArrayList<String>(), 0));
 			}
 		}
 		catch(IOException ex)

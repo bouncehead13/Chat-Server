@@ -111,9 +111,9 @@ class ChatServer extends RecursiveAction
 	}
 	
 	/* remove client from mapping */
-	public void removeClient(String userid)
+	public Client removeClient(String userid)
 	{
-		clients.remove(userid);
+		return clients.remove(userid);
 	}
 	
 	public void updateIP(String user, InetAddress ip)

@@ -10,9 +10,8 @@ class UDPClient extends Client
 	private DatagramPacket recvMessage;
 	private ChatServer server;
 	private boolean verbose;
-	private Integer received;
 
-	public UDPClient(DatagramPacket packet, DatagramSocket sock, boolean v, ChatServer s)
+	public UDPClient(DatagramPacket packet, DatagramSocket sock, boolean v, ChatServer s, ArrayList<String> u, Integer r)
 	{
 		server = s;
 		connection = sock; 
@@ -22,7 +21,7 @@ class UDPClient extends Client
 		ip = packet.getAddress().getHostAddress();
 		verbose = v;
 		username = server.findClientName(ip);
-		received = 0;
+		received = r;
 	}
 
 	public void run()
@@ -50,7 +49,6 @@ class UDPClient extends Client
 		}
 		else if(s.startsWith("WHO HERE"))
 		{
-
 			whoHere(s.trim().split(" "));
 		}
 		else
@@ -125,7 +123,7 @@ class UDPClient extends Client
 	private void sendMultipleUsers(String[] header, String[] messageByParts)
 	{
 		String user = header[1].toLowerCase();
-		String allnames = arrayToString(header, " ");
+		String allnames = arrayToString(header, " ", 2);
 		
 		try
 		{
@@ -285,13 +283,12 @@ class UDPClient extends Client
 		
 		if(client != null)
 		{
-			System.out.println("ip1 " + ip + " ip2 " + client.getIP());
 			if(!ip.equals(client.getIP()))
 			{
-				System.out.print("Updated: " + username);
-				server.updateIP(user, recvMessage.getAddress());
-				username = server.findClientName(ip);
-				System.out.println(" with " + username);
+				Client c = server.removeClient(user);
+				received = c.getReceived();
+				users = c.getList();
+				server.addClient(user, this);
 			}
 		}
 		else
@@ -375,7 +372,6 @@ class UDPClient extends Client
 	/* send message from another client */
 	public void sendData(String message, String fromUser)
 	{
-		System.out.println("User: " + username + "  ip: " + ip);
 		try
 		{	
 			DatagramPacket sendPacket = new DatagramPacket(message.getBytes(), message.getBytes().length, IPAddress, port);
